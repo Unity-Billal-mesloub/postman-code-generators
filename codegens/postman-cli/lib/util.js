@@ -324,6 +324,286 @@ var self = module.exports = {
   },
 
   /**
+   * Generates authentication flags for Postman CLI based on request auth configuration
+   *
+   * @param {Object} auth - The request.auth object from Postman SDK
+   * @param {String} quoteType - User provided option to decide whether to use single or double quotes
+   * @param {String} indent - Indentation string
+   * @returns {String} - The authentication flags to be added to the CLI command
+   */
+  /**
+   * Generates authentication flags for Postman CLI based on request auth configuration
+   *
+   * @param {Object} auth - The request.auth object from Postman SDK
+   * @param {String} quoteType - User provided option to decide whether to use single or double quotes
+   * @param {String} indent - Indentation string
+   * @returns {String} - The authentication flags to be added to the CLI command
+   */
+  getAuthFlags: function (auth, quoteType, indent) {
+    if (!auth || !auth.type) {
+      return '';
+    }
+
+    var authType = auth.type,
+      authData = auth[authType],
+      authFlags = '',
+      getAuthParam = function (paramName) {
+        if (!authData || !authData.members) {
+          return '';
+        }
+        var param = authData.members.find(function (item) { return item.key === paramName; });
+        return param ? param.value : '';
+      },
+      username, password, realm, nonce, algorithm, qop, nc, cnonce, opaque, token, tokenSecret,
+      consumerKey, consumerSecret, signatureMethod, timestamp, version, addParamsToHeader,
+      addEmptyParamsToSign, accessToken, addTokenTo, accessKey, secretKey, region, service,
+      sessionToken, authId, authKey, user, extraData, app, delegation, domain, workstation,
+      key, value, inParam;
+
+    switch (authType) {
+      case 'basic':
+        username = getAuthParam('username');
+        password = getAuthParam('password');
+        if (username || password) {
+          authFlags += indent + '--auth-basic-username ' + quoteType +
+            self.sanitize(username, true, quoteType) + quoteType;
+          authFlags += indent + '--auth-basic-password ' + quoteType +
+            self.sanitize(password, true, quoteType) + quoteType;
+        }
+        break;
+
+      case 'bearer':
+        token = getAuthParam('token');
+        if (token) {
+          authFlags += indent + '--auth-bearer-token ' + quoteType +
+            self.sanitize(token, true, quoteType) + quoteType;
+        }
+        break;
+
+      case 'digest':
+        username = getAuthParam('username');
+        password = getAuthParam('password');
+        realm = getAuthParam('realm');
+        nonce = getAuthParam('nonce');
+        algorithm = getAuthParam('algorithm');
+        qop = getAuthParam('qop');
+        nc = getAuthParam('nc');
+        cnonce = getAuthParam('cnonce');
+        opaque = getAuthParam('opaque');
+
+        if (username) {
+          authFlags += indent + '--auth-digest-username ' + quoteType +
+            self.sanitize(username, true, quoteType) + quoteType;
+        }
+        if (password) {
+          authFlags += indent + '--auth-digest-password ' + quoteType +
+            self.sanitize(password, true, quoteType) + quoteType;
+        }
+        if (realm) {
+          authFlags += indent + '--auth-digest-realm ' + quoteType +
+            self.sanitize(realm, true, quoteType) + quoteType;
+        }
+        if (nonce) {
+          authFlags += indent + '--auth-digest-nonce ' + quoteType +
+            self.sanitize(nonce, true, quoteType) + quoteType;
+        }
+        if (algorithm) {
+          authFlags += indent + '--auth-digest-algorithm ' + quoteType +
+            self.sanitize(algorithm, true, quoteType) + quoteType;
+        }
+        if (qop) {
+          authFlags += indent + '--auth-digest-qop ' + quoteType +
+            self.sanitize(qop, true, quoteType) + quoteType;
+        }
+        if (nc) {
+          authFlags += indent + '--auth-digest-nc ' + quoteType +
+            self.sanitize(nc, true, quoteType) + quoteType;
+        }
+        if (cnonce) {
+          authFlags += indent + '--auth-digest-cnonce ' + quoteType +
+            self.sanitize(cnonce, true, quoteType) + quoteType;
+        }
+        if (opaque) {
+          authFlags += indent + '--auth-digest-opaque ' + quoteType +
+            self.sanitize(opaque, true, quoteType) + quoteType;
+        }
+        break;
+
+      case 'oauth1':
+        consumerKey = getAuthParam('consumerKey');
+        consumerSecret = getAuthParam('consumerSecret');
+        token = getAuthParam('token');
+        tokenSecret = getAuthParam('tokenSecret');
+        signatureMethod = getAuthParam('signatureMethod');
+        timestamp = getAuthParam('timestamp');
+        nonce = getAuthParam('nonce');
+        version = getAuthParam('version');
+        realm = getAuthParam('realm');
+        addParamsToHeader = getAuthParam('addParamsToHeader');
+        addEmptyParamsToSign = getAuthParam('addEmptyParamsToSign');
+
+        if (consumerKey) {
+          authFlags += indent + '--auth-oauth1-consumerKey ' + quoteType +
+            self.sanitize(consumerKey, true, quoteType) + quoteType;
+        }
+        if (consumerSecret) {
+          authFlags += indent + '--auth-oauth1-consumerSecret ' + quoteType +
+            self.sanitize(consumerSecret, true, quoteType) + quoteType;
+        }
+        if (token) {
+          authFlags += indent + '--auth-oauth1-token ' + quoteType +
+            self.sanitize(token, true, quoteType) + quoteType;
+        }
+        if (tokenSecret) {
+          authFlags += indent + '--auth-oauth1-tokenSecret ' + quoteType +
+            self.sanitize(tokenSecret, true, quoteType) + quoteType;
+        }
+        if (signatureMethod) {
+          authFlags += indent + '--auth-oauth1-signatureMethod ' + quoteType +
+            self.sanitize(signatureMethod, true, quoteType) + quoteType;
+        }
+        if (timestamp) {
+          authFlags += indent + '--auth-oauth1-timestamp ' + quoteType +
+            self.sanitize(timestamp, true, quoteType) + quoteType;
+        }
+        if (nonce) {
+          authFlags += indent + '--auth-oauth1-nonce ' + quoteType +
+            self.sanitize(nonce, true, quoteType) + quoteType;
+        }
+        if (version) {
+          authFlags += indent + '--auth-oauth1-version ' + quoteType +
+            self.sanitize(version, true, quoteType) + quoteType;
+        }
+        if (realm) {
+          authFlags += indent + '--auth-oauth1-realm ' + quoteType +
+            self.sanitize(realm, true, quoteType) + quoteType;
+        }
+        if (addParamsToHeader) {
+          authFlags += indent + '--auth-oauth1-addParamsToHeader ' + quoteType +
+            self.sanitize(addParamsToHeader, true, quoteType) + quoteType;
+        }
+        if (addEmptyParamsToSign) {
+          authFlags += indent + '--auth-oauth1-addEmptyParamsToSign ' + quoteType +
+            self.sanitize(addEmptyParamsToSign, true, quoteType) + quoteType;
+        }
+        break;
+
+      case 'oauth2':
+        accessToken = getAuthParam('accessToken');
+        addTokenTo = getAuthParam('addTokenTo');
+
+        if (accessToken) {
+          authFlags += indent + '--auth-oauth2-accessToken ' + quoteType +
+            self.sanitize(accessToken, true, quoteType) + quoteType;
+        }
+        if (addTokenTo) {
+          authFlags += indent + '--auth-oauth2-addTokenTo ' + quoteType +
+            self.sanitize(addTokenTo, true, quoteType) + quoteType;
+        }
+        break;
+
+      case 'hawk':
+        authId = getAuthParam('authId');
+        authKey = getAuthParam('authKey');
+        algorithm = getAuthParam('algorithm');
+        user = getAuthParam('user');
+        nonce = getAuthParam('nonce');
+        extraData = getAuthParam('extraData');
+        app = getAuthParam('app');
+        delegation = getAuthParam('delegation');
+        timestamp = getAuthParam('timestamp');
+
+        if (authId) {
+          authFlags += indent + '--auth-hawk-authId ' + quoteType +
+            self.sanitize(authId, true, quoteType) + quoteType;
+        }
+        if (authKey) {
+          authFlags += indent + '--auth-hawk-authKey ' + quoteType +
+            self.sanitize(authKey, true, quoteType) + quoteType;
+        }
+        if (algorithm) {
+          authFlags += indent + '--auth-hawk-algorithm ' + quoteType +
+            self.sanitize(algorithm, true, quoteType) + quoteType;
+        }
+        if (user) {
+          authFlags += indent + '--auth-hawk-user ' + quoteType +
+            self.sanitize(user, true, quoteType) + quoteType;
+        }
+        if (nonce) {
+          authFlags += indent + '--auth-hawk-nonce ' + quoteType +
+            self.sanitize(nonce, true, quoteType) + quoteType;
+        }
+        if (extraData) {
+          authFlags += indent + '--auth-hawk-extraData ' + quoteType +
+            self.sanitize(extraData, true, quoteType) + quoteType;
+        }
+        if (app) {
+          authFlags += indent + '--auth-hawk-app ' + quoteType +
+            self.sanitize(app, true, quoteType) + quoteType;
+        }
+        if (delegation) {
+          authFlags += indent + '--auth-hawk-delegation ' + quoteType +
+            self.sanitize(delegation, true, quoteType) + quoteType;
+        }
+        if (timestamp) {
+          authFlags += indent + '--auth-hawk-timestamp ' + quoteType +
+            self.sanitize(timestamp, true, quoteType) + quoteType;
+        }
+        break;
+
+      case 'ntlm':
+        username = getAuthParam('username');
+        password = getAuthParam('password');
+        domain = getAuthParam('domain');
+        workstation = getAuthParam('workstation');
+
+        if (username) {
+          authFlags += indent + '--auth-ntlm-username ' + quoteType +
+            self.sanitize(username, true, quoteType) + quoteType;
+        }
+        if (password) {
+          authFlags += indent + '--auth-ntlm-password ' + quoteType +
+            self.sanitize(password, true, quoteType) + quoteType;
+        }
+        if (domain) {
+          authFlags += indent + '--auth-ntlm-domain ' + quoteType +
+            self.sanitize(domain, true, quoteType) + quoteType;
+        }
+        if (workstation) {
+          authFlags += indent + '--auth-ntlm-workstation ' + quoteType +
+            self.sanitize(workstation, true, quoteType) + quoteType;
+        }
+        break;
+
+      case 'apikey':
+        key = getAuthParam('key');
+        value = getAuthParam('value');
+        inParam = getAuthParam('in');
+
+        if (key) {
+          authFlags += indent + '--auth-apikey-key ' + quoteType +
+            self.sanitize(key, true, quoteType) + quoteType;
+        }
+        if (value) {
+          authFlags += indent + '--auth-apikey-value ' + quoteType +
+            self.sanitize(value, true, quoteType) + quoteType;
+        }
+        if (inParam) {
+          authFlags += indent + '--auth-apikey-in ' + quoteType +
+            self.sanitize(inParam, true, quoteType) + quoteType;
+        }
+        break;
+
+      default:
+        // Unsupported auth type, return empty string
+        break;
+    }
+
+    return authFlags;
+  },
+
+
+  /**
    * Decide whether we should add the HTTP method explicitly to the Postman CLI command.
    *
    * @param {Object} request

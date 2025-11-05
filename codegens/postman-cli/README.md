@@ -8,6 +8,19 @@ To run Code-Gen, ensure that you have NodeJS >= v8. A copy of the NodeJS install
 ## Using the Module
 The module will expose an object which will have property `convert` which is the function for converting the Postman-SDK request to Postman CLI code snippet and `getOptions` function which returns an array of supported options.
 
+## Supported Features
+
+### Authentication
+The codegen supports all authentication types available in Postman CLI:
+- **Basic Auth**: Username and password authentication
+- **Bearer Token**: Token-based authentication
+- **Digest Auth**: Digest authentication with realm, nonce, qop, etc.
+- **OAuth 1.0**: OAuth 1.0 authentication with consumer key, token, signatures
+- **OAuth 2.0**: OAuth 2.0 with access tokens
+- **API Key**: API key in header or query parameters
+- **Hawk**: Hawk authentication
+- **NTLM**: NTLM authentication with domain support
+
 ### convert function
 Convert function takes three parameters
 
@@ -53,6 +66,91 @@ convert(request, options, function(error, snippet) {
     //  handle snippet
 });
 ```
+
+### Authentication Examples
+
+#### Basic Authentication
+```js
+var request = new sdk.Request({
+    url: 'https://postman-echo.com/basic-auth',
+    method: 'GET',
+    auth: {
+        type: 'basic',
+        basic: [
+            { key: 'username', value: 'postman' },
+            { key: 'password', value: 'password' }
+        ]
+    }
+});
+
+convert(request, {}, function(error, snippet) {
+    console.log(snippet);
+    // Output: postman request 'https://postman-echo.com/basic-auth' --auth-basic-username 'postman' --auth-basic-password 'password'
+});
+```
+
+#### Bearer Token
+```js
+var request = new sdk.Request({
+    url: 'https://api.example.com/data',
+    method: 'GET',
+    auth: {
+        type: 'bearer',
+        bearer: [
+            { key: 'token', value: 'your-token-here' }
+        ]
+    }
+});
+
+convert(request, {}, function(error, snippet) {
+    console.log(snippet);
+    // Output: postman request 'https://api.example.com/data' --auth-bearer-token 'your-token-here'
+});
+```
+
+#### API Key
+```js
+var request = new sdk.Request({
+    url: 'https://api.example.com/data',
+    method: 'GET',
+    auth: {
+        type: 'apikey',
+        apikey: [
+            { key: 'key', value: 'X-API-Key' },
+            { key: 'value', value: 'my-secret-key' },
+            { key: 'in', value: 'header' }
+        ]
+    }
+});
+
+convert(request, {}, function(error, snippet) {
+    console.log(snippet);
+    // Output: postman request 'https://api.example.com/data' --auth-apikey-key 'X-API-Key' --auth-apikey-value 'my-secret-key' --auth-apikey-in 'header'
+});
+```
+
+#### AWS Signature
+```js
+var request = new sdk.Request({
+    url: 'https://s3.amazonaws.com/bucket/file',
+    method: 'GET',
+    auth: {
+        type: 'awsv4',
+        awsv4: [
+            { key: 'accessKey', value: 'AKIAIOSFODNN7EXAMPLE' },
+            { key: 'secretKey', value: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' },
+            { key: 'region', value: 'us-east-1' },
+            { key: 'service', value: 's3' }
+        ]
+    }
+});
+
+convert(request, {}, function(error, snippet) {
+    console.log(snippet);
+    // Output includes: --auth-aws-accessKey 'AKIAIOSFODNN7EXAMPLE' --auth-aws-secretKey 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' ...
+});
+```
+
 ### getOptions function
 
 This function returns a list of options supported by this codegen.

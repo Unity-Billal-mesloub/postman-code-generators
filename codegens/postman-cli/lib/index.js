@@ -4,7 +4,8 @@ const {
     getUrlStringfromUrlObject,
     addFormParam,
     form,
-    shouldAddHttpMethod
+    shouldAddHttpMethod,
+    getAuthFlags
   } = require('./util'),
   _ = require('./lodash');
 
@@ -174,6 +175,11 @@ self = module.exports = {
             snippet += `${form('-d', format)} ${quoteType}${quoteType}`;
         }
       }
+    }
+
+    // Add authentication flags if auth is present
+    if (request.auth) {
+      snippet += getAuthFlags(request.auth, quoteType, indent);
     }
 
     if (!redirect) {
