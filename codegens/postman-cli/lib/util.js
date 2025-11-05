@@ -331,14 +331,6 @@ var self = module.exports = {
    * @param {String} indent - Indentation string
    * @returns {String} - The authentication flags to be added to the CLI command
    */
-  /**
-   * Generates authentication flags for Postman CLI based on request auth configuration
-   *
-   * @param {Object} auth - The request.auth object from Postman SDK
-   * @param {String} quoteType - User provided option to decide whether to use single or double quotes
-   * @param {String} indent - Indentation string
-   * @returns {String} - The authentication flags to be added to the CLI command
-   */
   getAuthFlags: function (auth, quoteType, indent) {
     if (!auth || !auth.type) {
       return '';
@@ -356,9 +348,8 @@ var self = module.exports = {
       },
       username, password, realm, nonce, algorithm, qop, nc, cnonce, opaque, token, tokenSecret,
       consumerKey, consumerSecret, signatureMethod, timestamp, version, addParamsToHeader,
-      addEmptyParamsToSign, accessToken, addTokenTo, accessKey, secretKey, region, service,
-      sessionToken, authId, authKey, user, extraData, app, delegation, domain, workstation,
-      key, value, inParam;
+      addEmptyParamsToSign, accessToken, addTokenTo, authId, authKey, user, extraData, app,
+      delegation, domain, workstation, key, value, inParam;
 
     switch (authType) {
       case 'basic':
