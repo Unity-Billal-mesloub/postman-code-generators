@@ -122,15 +122,6 @@ self = module.exports = {
 
       if (!_.isEmpty(body)) {
         switch (body.mode) {
-          case 'urlencoded':
-            _.forEach(body.urlencoded, function (data) {
-              if (!data.disabled) {
-                snippet += indent + (format ? '--data-urlencode' : '-d');
-                snippet += ` ${quoteType}${sanitize(data.key, trim, quoteType, false, true)}=` +
-                  `${sanitize(data.value, trim, quoteType, false, !format)}${quoteType}`;
-              }
-            });
-            break;
           case 'raw': {
             let rawBody = body.raw.toString(),
               sanitizedBody = sanitize(rawBody, trim, quoteType);
@@ -158,11 +149,8 @@ self = module.exports = {
                   snippet += quoteType;
                 }
                 else {
-                  snippet += ` ${quoteType}${sanitize(data.key, trim, quoteType)}=` +
-                    sanitize(`"${sanitize(data.value, trim, '"', true)}"`, trim, quoteType, quoteType === '"');
-                  if (data.contentType) {
-                    snippet += `;type=${data.contentType}`;
-                  }
+                  snippet += `${indent} ${form('-f', format)} ${quoteType}${sanitize(data.key, trim, quoteType)}=` +
+                    sanitize(`${sanitize(data.value, trim, '"', true)}`, trim, quoteType, quoteType === '"');
                   snippet += quoteType;
                 }
               }
@@ -172,7 +160,7 @@ self = module.exports = {
             snippet += indent + form('-d', format) + ` ${quoteType}@${sanitize(body[body.mode].src, trim)}${quoteType}`;
             break;
           default:
-            snippet += `${form('-d', format)} ${quoteType}${quoteType}`;
+            snippet += `${indent}${form('-d', format)} ${quoteType}${quoteType}`;
         }
       }
     }
