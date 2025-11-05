@@ -38,12 +38,6 @@ self = module.exports = {
       snippet += ` ${request.method}`;
     }
 
-    if (quiet) {
-      snippet += ` ${form('-q', format)}`;
-    }
-    if (timeout > 0) {
-      snippet += ` --timeout ${timeout}`;
-    }
     if (multiLine) {
       indent = options.indentType === 'Tab' ? '\t' : ' ';
       indent = ' ' + options.lineContinuationCharacter + '\n' + indent.repeat(options.indentCount); // eslint-disable-line max-len
@@ -53,6 +47,13 @@ self = module.exports = {
     }
 
     snippet += ` ${quoteType + url + quoteType}`;
+
+    if (quiet) {
+      snippet += `${indent}${form('-q', format)}`;
+    }
+    if (timeout > 0) {
+      snippet += `${indent}--timeout ${timeout}`;
+    }
 
     if (request.body && !request.headers.has('Content-Type')) {
       if (request.body.mode === 'file') {
