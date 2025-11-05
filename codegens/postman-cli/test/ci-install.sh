@@ -3,7 +3,7 @@ set -ev; # stop on error
 
 echo "Installing dependencies required for tests in codegens/postman-cli"
 
-# Install curl if not already available
+# Install curl command-line tool (needed to download Postman CLI)
 echo "Installing curl..."
 sudo apt-get update
 sudo apt-get install -y curl

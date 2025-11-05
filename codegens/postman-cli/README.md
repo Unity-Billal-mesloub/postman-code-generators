@@ -129,28 +129,6 @@ convert(request, {}, function(error, snippet) {
 });
 ```
 
-#### AWS Signature
-```js
-var request = new sdk.Request({
-    url: 'https://s3.amazonaws.com/bucket/file',
-    method: 'GET',
-    auth: {
-        type: 'awsv4',
-        awsv4: [
-            { key: 'accessKey', value: 'AKIAIOSFODNN7EXAMPLE' },
-            { key: 'secretKey', value: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' },
-            { key: 'region', value: 'us-east-1' },
-            { key: 'service', value: 's3' }
-        ]
-    }
-});
-
-convert(request, {}, function(error, snippet) {
-    console.log(snippet);
-    // Output includes: --auth-aws-accessKey 'AKIAIOSFODNN7EXAMPLE' --auth-aws-secretKey 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' ...
-});
-```
-
 ### getOptions function
 
 This function returns a list of options supported by this codegen.

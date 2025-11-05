@@ -38,7 +38,7 @@ var self = module.exports = {
         .replace(/!/g, '\\!');
     }
     else if (quoteType === '\'') {
-      // for curl escaping of single quotes inside single quotes involves changing of ' to '\''
+      // for shell escaping of single quotes inside single quotes involves changing of ' to '\''
       inputString = inputString.replace(/'/g, "'\\''"); // eslint-disable-line quotes
     }
 
@@ -298,7 +298,7 @@ var self = module.exports = {
    * Determines if a request body is actually empty.
    * This is needed because body.isEmpty() returns false for formdata
    * and urlencoded when they contain only disabled params which will not
-   * be a part of the curl request.
+   * be a part of the CLI request.
    */
   isBodyEmpty (body) {
     if (!body) {
