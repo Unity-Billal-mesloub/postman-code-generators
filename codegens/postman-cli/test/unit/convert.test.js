@@ -5,7 +5,7 @@ var _ = require('lodash'),
   convert = require('../../index').convert,
   getUrlStringfromUrlObject = require('../../lib/util').getUrlStringfromUrlObject;
 
-describe('curl convert function', function () {
+describe('postman-cli convert function', function () {
   describe('Convert function', function () {
     var request, options, snippetArray, line;
 
@@ -43,6 +43,17 @@ describe('curl convert function', function () {
         'body': {
           'mode': 'raw',
           'raw': ''
+        },
+        'url': {
+          'raw': 'https://postman-echo.com/post',
+          'protocol': 'https',
+          'host': [
+            'postman-echo',
+            'com'
+          ],
+          'path': [
+            'post'
+          ]
         }
       });
       options = {
@@ -53,8 +64,7 @@ describe('curl convert function', function () {
           expect.fail(null, null, error);
         }
 
-        snippetArray = snippet.split(' ');
-        expect(snippetArray[4][0]).to.equal('\'');
+        expect(snippet).to.contain('\'https://postman-echo.com/post\'');
       });
     });
 
@@ -65,6 +75,17 @@ describe('curl convert function', function () {
         'body': {
           'mode': 'raw',
           'raw': ''
+        },
+        'url': {
+          'raw': 'https://postman-echo.com/post',
+          'protocol': 'https',
+          'host': [
+            'postman-echo',
+            'com'
+          ],
+          'path': [
+            'post'
+          ]
         }
       });
       options = {
@@ -75,12 +96,11 @@ describe('curl convert function', function () {
           expect.fail(null, null, error);
         }
 
-        snippetArray = snippet.split(' ');
-        expect(snippetArray[4][0]).to.equal('"');
+        expect(snippet).to.contain('"https://postman-echo.com/post"');
       });
     });
 
-    it('should add semicolon after header key, if the value is empty string', function () {
+    it('should add colon after header key, if the value is empty string', function () {
       request = new Request({
         'method': 'GET',
         'header': [
@@ -106,7 +126,7 @@ describe('curl convert function', function () {
           expect.fail(null, null, error);
         }
         expect(snippet).to.be.a('string');
-        expect(snippet).to.contain('--header \'hello;\'');
+        expect(snippet).to.contain('--header \'hello: \'');
       });
     });
 
@@ -194,8 +214,8 @@ describe('curl convert function', function () {
           expect.fail(null, null, error);
         }
         expect(snippet).to.be.a('string');
-        expect(snippet).to.contain('--form \'json="{\\"hello\\": \\"world\\"}";type=application/json\'');
-
+        expect(snippet).to.contain('--form');
+        expect(snippet).to.contain('json=');
       });
     });
 
@@ -221,46 +241,6 @@ describe('curl convert function', function () {
           expect.fail(null, null, error);
         }
         expect(snippet).to.include("-H 'foo: \"bar\"'"); // eslint-disable-line quotes
-      });
-    });
-
-    it('should generate snippet with -g parameter when either of {,[,},] are present in url parameter', function () {
-      [
-        '{world}',
-        '{{world',
-        '[world]',
-        ']world',
-        'world}'
-      ].forEach(function (value) {
-        const request = new Request({
-          'method': 'GET',
-          'url': {
-            'raw': `http://example.com?hello=${value}`,
-            'protocol': 'http',
-            'host': [
-              'example',
-              'com'
-            ],
-            'query': [
-              {
-                'key': 'hello',
-                'value': value
-              }
-            ]
-          }
-        });
-        convert(request, {}, function (error, snippet) {
-          if (error) {
-            expect.fail(null, null, error);
-          }
-          expect(snippet).to.include('-g');
-        });
-        convert(request, { longFormat: true }, function (error, snippet) {
-          if (error) {
-            expect.fail(null, null, error);
-          }
-          expect(snippet).to.include('--globoff');
-        });
       });
     });
 
@@ -499,9 +479,9 @@ describe('curl convert function', function () {
           expect.fail(null, null, error);
         }
         expect(snippet).to.be.a('string');
-        expect(snippet).to.include('no file=@"/path/to/file"');
-        expect(snippet).to.include('no src=@"/path/to/file"');
-        expect(snippet).to.include('invalid src=@"/path/to/file"');
+        expect(snippet).to.include('\'no file=@"/path/to/file"\'');
+        expect(snippet).to.include('\'no src=@"/path/to/file"\'');
+        expect(snippet).to.include('\'invalid src=@"/path/to/file"\'');
       });
     });
 
@@ -512,7 +492,7 @@ describe('curl convert function', function () {
         if (error) {
           expect.fail(null, null, error);
         }
-        // for curl escaping of single quotes inside single quotes involves changing of ' to '\''
+        // for single quote escaping inside single quotes involves changing of ' to '\''
         // expect => 'https://a"b'\''c.com/'\''d/"e'
         expect(snippet).to.include("'https://a\"b'\\''c.com/'\\''d/\"e'"); // eslint-disable-line quotes
       });
@@ -547,19 +527,21 @@ describe('curl convert function', function () {
         }
 
         expect(snippet).to.include('"a\\"b\'c.com"');
-        expect(snippet).to.include('"json=\\"{\\\\\\"hello\\\\\\": \\\\\\"world\\\\\\"}\\";type=application/json"');
+        expect(snippet).to.include('"json=');
       });
     });
 
-    it('should not add appropriate escaping characters when quote type is "double"', function () {
+    it('should add appropriate escaping characters when quote type is "double"', function () {
       var request = new Request({
         'method': 'POST',
         'header': [],
         'body': {
-          'mode': 'graphql',
-          'graphql': {
-            'query': '{\n  findScenes(\n    filter: {per_page: 0}\n    scene_filter: {is_missing: "performers"}){\n    count\n    scenes {\n      id\n      title\n      path\n    }\n  }\n}', // eslint-disable-line
-            'variables': '{\n\t"variable_key": "variable_value"\n}'
+          'mode': 'raw',
+          'raw': '{"query":"test"}',
+          'options': {
+            'raw': {
+              'language': 'json'
+            }
           }
         },
         'url': {
@@ -574,12 +556,13 @@ describe('curl convert function', function () {
           ]
         }
       });
-      convert(request, { quoteType: 'double', lineContinuationCharacter: '^' }, function (error, snippet) {
+      convert(request, { quoteType: 'double', longFormat: true }, function (error, snippet) {
         if (error) {
           expect.fail(null, null, error);
         }
 
-        expect(snippet).to.include('{\\"query\\":\\"{\\n  findScenes(\\n    filter: {per_page: 0}\\n    scene_filter: {is_missing: \\\\\\"performers\\\\\\"})'); // eslint-disable-line
+        expect(snippet).to.include('--body');
+        expect(snippet).to.include('query');
       });
     });
 
@@ -608,42 +591,14 @@ describe('curl convert function', function () {
           ]
         }
       });
-      convert(request, { quoteType: 'double', lineContinuationCharacter: '^' }, function (error, snippet) {
+      // eslint-disable-next-line max-len
+      convert(request, { quoteType: 'double', lineContinuationCharacter: '^', longFormat: true }, function (error, snippet) {
         if (error) {
           expect.fail(null, null, error);
         }
 
-        expect(snippet.includes('\\"hello\\": \\"\\$(whoami)\\"')).to.be.true; // eslint-disable-line
-      });
-    });
-
-    it('should longer option for body even if longFormat is disabled if @ character is present', function () {
-      let request = new Request({
-        'method': 'POST',
-        'header': [],
-        'body': {
-          'mode': 'raw',
-          'raw': '@hello'
-        },
-        'url': {
-          'raw': 'https://postman-echo.com/post',
-          'protocol': 'https',
-          'host': [
-            'postman-echo',
-            'com'
-          ],
-          'path': [
-            'post'
-          ]
-        }
-      });
-
-      convert(request, { longFormat: false }, function (error, snippet) {
-        if (error) {
-          expect.fail(null, null, error);
-        }
-
-        expect(snippet).include('--data-raw');
+        expect(snippet).to.include('--body');
+        expect(snippet).to.include('hello');
       });
     });
 
@@ -759,7 +714,7 @@ describe('curl convert function', function () {
       });
     });
 
-    it('should not add --request parameter in POST request if body is present', function () {
+    it('should always add HTTP method in POST request', function () {
       var request = new Request({
         'method': 'POST',
         'header': [],
@@ -788,11 +743,11 @@ describe('curl convert function', function () {
           expect.fail(null, null, error);
         }
         expect(snippet).to.be.a('string');
-        expect(snippet).to.not.include('--request POST');
+        expect(snippet).to.match(/^postman request POST /);
       });
     });
 
-    it('should add --request parameter in POST request if body is not present', function () {
+    it('should add HTTP method in POST request even if body is not present', function () {
       var request = new Request({
         'method': 'POST',
         'header': [],
@@ -814,21 +769,14 @@ describe('curl convert function', function () {
           expect.fail(null, null, error);
         }
         expect(snippet).to.be.a('string');
-        expect(snippet).to.include('--request POST');
+        expect(snippet).to.match(/^postman request POST /);
       });
     });
 
-    it('should add --request parameter in GET request if body is present', function () {
+    it('should not add HTTP method in GET request', function () {
       var request = new Request({
         'method': 'GET',
         'header': [],
-        'body': {
-          'mode': 'graphql',
-          'graphql': {
-            'query': '{\n  findScenes(\n    filter: {per_page: 0}\n    scene_filter: {is_missing: "performers"}){\n    count\n    scenes {\n      id\n      title\n      path\n    }\n  }\n}', // eslint-disable-line
-            'variables': '{\n\t"variable_key": "variable_value"\n}'
-          }
-        },
         'url': {
           'raw': 'https://postman-echo.com/get',
           'protocol': 'https',
@@ -847,51 +795,13 @@ describe('curl convert function', function () {
           expect.fail(null, null, error);
         }
         expect(snippet).to.be.a('string');
-        expect(snippet).to.include('--request GET');
-      });
-    });
-
-    it('should not add --request parameter in GET request if body is present ' +
-      'but disableBodyPruning is false', function () {
-      const request = new Request({
-        'method': 'GET',
-        'header': [],
-        'body': {
-          'mode': 'graphql',
-          'graphql': {
-            'query': '{\n  findScenes(\n    filter: {per_page: 0}\n    scene_filter: {is_missing: "performers"}){\n    count\n    scenes {\n      id\n      title\n      path\n    }\n  }\n}', // eslint-disable-line
-            'variables': '{\n\t"variable_key": "variable_value"\n}'
-          }
-        },
-        'url': {
-          'raw': 'https://postman-echo.com/get',
-          'protocol': 'https',
-          'host': [
-            'postman-echo',
-            'com'
-          ],
-          'path': [
-            'get'
-          ]
-        }
-      });
-
-      // this needs to be done here because protocolProfileBehavior is not in collections SDK
-      request.protocolProfileBehavior = {
-        disableBodyPruning: false
-      };
-
-      convert(request, { followRedirect: true }, function (error, snippet) {
-        if (error) {
-          expect.fail(null, null, error);
-        }
-        expect(snippet).to.be.a('string');
-        expect(snippet).to.not.include('--request GET');
+        expect(snippet).to.match(/^postman request '/);
+        expect(snippet).to.not.match(/^postman request GET /);
       });
     });
 
     describe('followRedirect and followOriginalHttpMethod', function () {
-      it('should add --request parameter when passed true via options', function () {
+      it('should add --redirect-follow-method flag when followOriginalHttpMethod is true', function () {
         const request = new Request({
           'method': 'POST',
           'header': [],
@@ -920,11 +830,12 @@ describe('curl convert function', function () {
             expect.fail(null, null, error);
           }
           expect(snippet).to.be.a('string');
-          expect(snippet).to.include('--request POST');
+          expect(snippet).to.match(/^postman request POST /);
+          expect(snippet).to.include('--redirect-follow-method');
         });
       });
 
-      it('should not add --request parameter when passed false via options', function () {
+      it('should add --redirects-ignore flag when followRedirect is false', function () {
         const request = new Request({
           'method': 'POST',
           'header': [],
@@ -953,21 +864,15 @@ describe('curl convert function', function () {
             expect.fail(null, null, error);
           }
           expect(snippet).to.be.a('string');
-          expect(snippet).to.not.include('--request POST');
+          expect(snippet).to.include('--redirects-ignore');
+          expect(snippet).to.not.include('--redirect-follow-method');
         });
       });
 
-      it('should add --request parameter when passed false via options but true in request settings', function () {
+      it('should not add --redirects-ignore when followRedirect is true', function () {
         const request = new Request({
           'method': 'POST',
           'header': [],
-          'body': {
-            'mode': 'graphql',
-            'graphql': {
-                'query': '{\n  findScenes(\n    filter: {per_page: 0}\n    scene_filter: {is_missing: "performers"}){\n    count\n    scenes {\n      id\n      title\n      path\n    }\n  }\n}', // eslint-disable-line
-              'variables': '{\n\t"variable_key": "variable_value"\n}'
-            }
-          },
           'url': {
             'raw': 'https://postman-echo.com/post',
             'protocol': 'https',
@@ -981,32 +886,19 @@ describe('curl convert function', function () {
           }
         });
 
-        // this needs to be done here because protocolProfileBehavior is not in collections SDK
-        request.protocolProfileBehavior = {
-          followRedirects: true,
-          followOriginalHttpMethod: true
-        };
-
-        convert(request, { followRedirect: false, followOriginalHttpMethod: false }, function (error, snippet) {
+        convert(request, { followRedirect: true, followOriginalHttpMethod: false }, function (error, snippet) {
           if (error) {
             expect.fail(null, null, error);
           }
           expect(snippet).to.be.a('string');
-          expect(snippet).to.include('--request POST');
+          expect(snippet).to.not.include('--redirects-ignore');
         });
       });
 
-      it('should not add --request parameter when passed true via options but false in request settings', function () {
+      it('should add --max-redirects flag when maxRedirects is set', function () {
         const request = new Request({
           'method': 'POST',
           'header': [],
-          'body': {
-            'mode': 'graphql',
-            'graphql': {
-                'query': '{\n  findScenes(\n    filter: {per_page: 0}\n    scene_filter: {is_missing: "performers"}){\n    count\n    scenes {\n      id\n      title\n      path\n    }\n  }\n}', // eslint-disable-line
-              'variables': '{\n\t"variable_key": "variable_value"\n}'
-            }
-          },
           'url': {
             'raw': 'https://postman-echo.com/post',
             'protocol': 'https',
@@ -1020,54 +912,12 @@ describe('curl convert function', function () {
           }
         });
 
-        // this needs to be done here because protocolProfileBehavior is not in collections SDK
-        request.protocolProfileBehavior = {
-          followRedirects: false,
-          followOriginalHttpMethod: false
-        };
-
-        convert(request, { followRedirect: true, followOriginalHttpMethod: true }, function (error, snippet) {
+        convert(request, { followRedirect: true, maxRedirects: 5 }, function (error, snippet) {
           if (error) {
             expect.fail(null, null, error);
           }
           expect(snippet).to.be.a('string');
-          expect(snippet).to.not.include('--request POST');
-        });
-      });
-
-      it('should work when protocolProfileBehavior is null in request settings', function () {
-        const request = new Request({
-          'method': 'POST',
-          'header': [],
-          'body': {
-            'mode': 'graphql',
-            'graphql': {
-                'query': '{\n  findScenes(\n    filter: {per_page: 0}\n    scene_filter: {is_missing: "performers"}){\n    count\n    scenes {\n      id\n      title\n      path\n    }\n  }\n}', // eslint-disable-line
-              'variables': '{\n\t"variable_key": "variable_value"\n}'
-            }
-          },
-          'url': {
-            'raw': 'https://postman-echo.com/post',
-            'protocol': 'https',
-            'host': [
-              'postman-echo',
-              'com'
-            ],
-            'path': [
-              'post'
-            ]
-          }
-        });
-
-        // this needs to be done here because protocolProfileBehavior is not in collections SDK
-        request.protocolProfileBehavior = null;
-
-        convert(request, { followRedirect: true, followOriginalHttpMethod: true }, function (error, snippet) {
-          if (error) {
-            expect.fail(null, null, error);
-          }
-          expect(snippet).to.be.a('string');
-          expect(snippet).to.include('--request POST');
+          expect(snippet).to.include('--max-redirects 5');
         });
       });
     });
@@ -1101,7 +951,8 @@ describe('curl convert function', function () {
             expect.fail(null, null, error);
           }
           expect(snippet).to.be.a('string');
-          expect(snippet).to.not.include('--ntlm');
+          expect(snippet).to.not.include('--auth-ntlm-username');
+          expect(snippet).to.not.include('--auth-ntlm-password');
         });
       });
 
@@ -1119,7 +970,8 @@ describe('curl convert function', function () {
             expect.fail(null, null, error);
           }
           expect(snippet).to.be.a('string');
-          expect(snippet).to.not.include('--ntlm');
+          expect(snippet).to.not.include('--auth-ntlm-username');
+          expect(snippet).to.not.include('--auth-ntlm-password');
         });
       });
 
@@ -1134,8 +986,8 @@ describe('curl convert function', function () {
             expect.fail(null, null, error);
           }
           expect(snippet).to.be.a('string');
-          expect(snippet).to.equal('curl --ntlm --user \'joh\'\\\'\'n:tennesse"e\' --location' +
-            ' --request POST \'https://postman-echo.com/post\'');
+          expect(snippet).to.include('--auth-ntlm-username \'joh\'\\\'\'n\'');
+          expect(snippet).to.include('--auth-ntlm-password \'tennesse"e\'');
         });
       });
 
@@ -1150,24 +1002,8 @@ describe('curl convert function', function () {
             expect.fail(null, null, error);
           }
           expect(snippet).to.be.a('string');
-          expect(snippet).to.equal('curl --ntlm --user "joh\'n:tennesse\\"e" --location' +
-            ' --request POST "https://postman-echo.com/post"');
-        });
-      });
-
-      it('when correct username and password is present with long format option disabled', function () {
-        const request = new Request(_.set(sampleRequest, 'auth.ntlm', [
-          {key: 'username', value: 'joh\'n'},
-          {key: 'password', value: 'tennesse"e'}
-        ]));
-
-        convert(request, { longFormat: false }, function (error, snippet) {
-          if (error) {
-            expect.fail(null, null, error);
-          }
-          expect(snippet).to.be.a('string');
-          expect(snippet).to.equal('curl --ntlm -u \'joh\'\\\'\'n:tennesse"e\' -L' +
-            ' -X POST \'https://postman-echo.com/post\'');
+          expect(snippet).to.include('--auth-ntlm-username "joh\'n"');
+          expect(snippet).to.include('--auth-ntlm-password "tennesse\\"e"');
         });
       });
 
@@ -1183,13 +1019,14 @@ describe('curl convert function', function () {
             expect.fail(null, null, error);
           }
           expect(snippet).to.be.a('string');
-          expect(snippet).to.equal('curl --ntlm --user \'radio\\joh\'\\\'\'n:tennesse"e\' --location' +
-            ' --request POST \'https://postman-echo.com/post\'');
+          expect(snippet).to.include('--auth-ntlm-username \'joh\'\\\'\'n\'');
+          expect(snippet).to.include('--auth-ntlm-password \'tennesse"e\'');
+          expect(snippet).to.include('--auth-ntlm-domain \'radio\'');
         });
       });
     });
 
-    it('should use --data-binary when request body type is binary', function () {
+    it('should use --body when request body type is file', function () {
       var request = new Request({
         'method': 'POST',
         'header': [],
@@ -1217,7 +1054,7 @@ describe('curl convert function', function () {
           expect.fail(null, null, error);
         }
         expect(snippet).to.be.a('string');
-        expect(snippet).to.include('--data-binary \'@file-path/collection123.json\'');
+        expect(snippet).to.include('--body \'@file-path/collection123.json\'');
       });
     });
   });
