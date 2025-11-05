@@ -48,26 +48,20 @@ var self = module.exports = {
   form: function (option, format) {
     if (format) {
       switch (option) {
-        case '-s':
-          return '--silent';
-        case '-L':
-          return '--location';
-        case '-m':
-          return '--max-time';
-        case '-I':
-          return '--head';
-        case '-X':
-          return '--request';
         case '-H':
           return '--header';
         case '-d':
-          return '--data';
-        case '-F':
+          return '--body';
+        case '-f':
           return '--form';
-        case '-g':
-          return '--globoff';
+        case '-e':
+          return '--environment';
+        case '-o':
+          return '--output';
+        case '-q':
+          return '--quiet';
         default:
-          return '';
+          return option;
       }
     }
     else {
@@ -330,50 +324,55 @@ var self = module.exports = {
   },
 
   /**
-   * Decide whether we should add the HTTP method explicitly to the cURL command.
+   * Decide whether we should add the HTTP method explicitly to the Postman CLI command.
    *
    * @param {Object} request
-   * @param {Object} options
    *
    * @returns {Boolean}
    */
-  shouldAddHttpMethod: function (request, options) {
-    let followRedirect = options.followRedirect,
-      followOriginalHttpMethod = options.followOriginalHttpMethod,
-      disableBodyPruning = true,
-      isBodyEmpty = self.isBodyEmpty(request.body);
+  shouldAddHttpMethod: function (request) {
 
-    // eslint-disable-next-line lodash/prefer-is-nil
-    if (request.protocolProfileBehavior !== null && request.protocolProfileBehavior !== undefined) {
-      followRedirect = _.get(request, 'protocolProfileBehavior.followRedirects', followRedirect);
-      followOriginalHttpMethod =
-        _.get(request, 'protocolProfileBehavior.followOriginalHttpMethod', followOriginalHttpMethod);
-      disableBodyPruning = _.get(request, 'protocolProfileBehavior.disableBodyPruning', true);
+    if (request.method === 'GET') {
+      return false;
     }
 
-    if (followRedirect && followOriginalHttpMethod) {
-      return true;
-    }
+    return true;
+    //   let followRedirect = options.followRedirect,
+    //     followOriginalHttpMethod = options.followOriginalHttpMethod,
+    //     disableBodyPruning = true,
+    //     isBodyEmpty = self.isBodyEmpty(request.body);
 
-    switch (request.method) {
-      case 'HEAD':
-        return false;
-      case 'GET':
-        // disableBodyPruning will generally not be present in the request
-        // the only time it will be present, its value will be _false_
-        // i.e. the user wants to prune the request body despite it being present
-        if (!isBodyEmpty && disableBodyPruning) {
-          return true;
-        }
+    //   // eslint-disable-next-line lodash/prefer-is-nil
+    //   if (request.protocolProfileBehavior !== null && request.protocolProfileBehavior !== undefined) {
+    //     followRedirect = _.get(request, 'protocolProfileBehavior.followRedirects', followRedirect);
+    //     followOriginalHttpMethod =
+    //       _.get(request, 'protocolProfileBehavior.followOriginalHttpMethod', followOriginalHttpMethod);
+    //     disableBodyPruning = _.get(request, 'protocolProfileBehavior.disableBodyPruning', true);
+    //   }
 
-        return false;
-      case 'POST':
-        return isBodyEmpty;
-      case 'DELETE':
-      case 'PUT':
-      case 'PATCH':
-      default:
-        return true;
-    }
+    //   if (followRedirect && followOriginalHttpMethod) {
+    //     return true;
+    //   }
+
+    //   switch (request.method) {
+    //     case 'HEAD':
+    //       return false;
+    //     case 'GET':
+    //       // disableBodyPruning will generally not be present in the request
+    //       // the only time it will be present, its value will be _false_
+    //       // i.e. the user wants to prune the request body despite it being present
+    //       if (!isBodyEmpty && disableBodyPruning) {
+    //         return true;
+    //       }
+
+  //       return false;
+  //     case 'POST':
+  //       return isBodyEmpty;
+  //     case 'DELETE':
+  //     case 'PUT':
+  //     case 'PATCH':
+  //     default:
+  //       return true;
+  //   }
   }
 };

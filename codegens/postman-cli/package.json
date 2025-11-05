@@ -1,15 +1,16 @@
 {
-  "name": "@postman/codegen-curl",
-  "version": "0.1.6",
-  "description": "Converter plugin to convert from postman sdk request to cURL code snippet",
+  "name": "@postman/codegen-postman-cli",
+  "version": "0.1.0",
+  "description": "Converter plugin to convert from postman sdk request to Postman CLI code snippet",
   "com_postman_plugin": {
     "type": "code_generator",
-    "lang": "curl",
-    "variant": "cURL",
+    "lang": "postman-cli",
+    "variant": "Postman CLI",
     "syntax_mode": "powershell"
   },
   "main": "index.js",
   "scripts": {
+    "dev": "node dev-watch.js",
     "test": "node npm/test.js",
     "test-lint": "node npm/test-lint.js",
     "test-newman": "node npm/test-newman.js",
@@ -21,7 +22,7 @@
   },
   "author": "Postman Labs <help@getpostman.com>",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/postmanlabs/code-generators/tree/master/codegens/curl",
+  "homepage": "https://github.com/postmanlabs/code-generators/tree/master/codegens/postman-cli",
   "dependencies": {},
   "devDependencies": {},
   "engines": {

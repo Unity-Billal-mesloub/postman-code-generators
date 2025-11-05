@@ -2,7 +2,6 @@ const {
     sanitize,
     sanitizeOptions,
     getUrlStringfromUrlObject,
-    getNtlmAuthInfo,
     addFormParam,
     form,
     shouldAddHttpMethod
@@ -15,39 +14,35 @@ self = module.exports = {
   convert: function (request, options, callback) {
 
     if (!_.isFunction(callback)) {
-      throw new Error('Curl-Converter: callback is not valid function');
+      throw new Error('Postman-CLI-Converter: callback is not valid function');
     }
     options = sanitizeOptions(options, self.getOptions());
 
     var indent, trim, headersData, body, redirect, timeout, multiLine,
-      format, snippet, silent, url, quoteType, ntlmAuth;
+      format, snippet, quiet, url, quoteType, maxRedirects, followOriginalHttpMethod;
 
     redirect = options.followRedirect;
+    maxRedirects = options.maxRedirects;
     timeout = options.requestTimeoutInSeconds;
     multiLine = options.multiLine;
     format = options.longFormat;
     trim = options.trimRequestBody;
-    silent = options.silent;
+    quiet = options.quiet;
+    followOriginalHttpMethod = options.followOriginalHttpMethod;
     quoteType = options.quoteType === 'single' ? '\'' : '"';
     url = getUrlStringfromUrlObject(request.url, quoteType);
-    ntlmAuth = getNtlmAuthInfo(request.auth, quoteType, format);
 
-    snippet = 'curl';
+    snippet = 'postman request';
 
-    if (ntlmAuth) {
-      snippet += ntlmAuth;
+    if (shouldAddHttpMethod(request, options)) {
+      snippet += ` ${request.method}`;
     }
-    if (silent) {
-      snippet += ` ${form('-s', format)}`;
-    }
-    if (redirect) {
-      snippet += ` ${form('-L', format)}`;
+
+    if (quiet) {
+      snippet += ` ${form('-q', format)}`;
     }
     if (timeout > 0) {
-      snippet += ` ${form('-m', format)} ${timeout}`;
-    }
-    if ((url.match(/[{[}\]]/g) || []).length > 0) {
-      snippet += ` ${form('-g', format)}`;
+      snippet += ` --timeout ${timeout}`;
     }
     if (multiLine) {
       indent = options.indentType === 'Tab' ? '\t' : ' ';
@@ -57,12 +52,6 @@ self = module.exports = {
       indent = ' ';
     }
 
-    if (request.method === 'HEAD') {
-      snippet += ` ${form('-I', format)}`;
-    }
-    if (shouldAddHttpMethod(request, options)) {
-      snippet += ` ${form('-X', format)} ${request.method}`;
-    }
     snippet += ` ${quoteType + url + quoteType}`;
 
     if (request.body && !request.headers.has('Content-Type')) {
@@ -87,14 +76,7 @@ self = module.exports = {
           return;
         }
         snippet += indent + `${form('-H', format)} ${quoteType}${sanitize(header.key, true, quoteType)}`;
-        // If the header value is an empty string then add a semicolon after key
-        // otherwise the header would be ignored by curl
-        if (header.value) {
-          snippet += `: ${sanitize(header.value, false, quoteType)}${quoteType}`;
-        }
-        else {
-          snippet += ';' + quoteType;
-        }
+        snippet += `: ${sanitize(header.value, false, quoteType)}${quoteType}`;
       });
     }
 
@@ -149,9 +131,6 @@ self = module.exports = {
             break;
           case 'raw': {
             let rawBody = body.raw.toString(),
-              isAsperandPresent = _.includes(rawBody, '@'),
-              // Use the long option if `@` is present in the request body otherwise follow user setting
-              optionName = isAsperandPresent ? '--data-raw' : form('-d', format),
               sanitizedBody = sanitize(rawBody, trim, quoteType);
 
             if (!multiLine) {
@@ -163,44 +142,20 @@ self = module.exports = {
               }
             }
 
-            snippet += indent + `${optionName} ${quoteType}${sanitizedBody}${quoteType}`;
+            snippet += indent + `${form('-d', format)} ${quoteType}${sanitizedBody}${quoteType}`;
 
             break;
           }
 
-          case 'graphql': {
-            // eslint-disable-next-line no-case-declarations
-            let query = body.graphql ? body.graphql.query : '',
-              graphqlVariables, requestBody, isAsperandPresent, optionName;
-            try {
-              graphqlVariables = JSON.parse(body.graphql.variables);
-            }
-            catch (e) {
-              graphqlVariables = {};
-            }
-
-            requestBody = JSON.stringify({
-              query: query,
-              variables: graphqlVariables
-            });
-
-            isAsperandPresent = _.includes(requestBody, '@');
-            // Use the long option if `@` is present in the request body otherwise follow user setting
-            optionName = isAsperandPresent ? '--data-raw' : form('-d', format);
-            snippet += indent + `${optionName} ${quoteType}${sanitize(requestBody, trim, quoteType)}${quoteType}`;
-            break;
-          }
           case 'formdata':
             _.forEach(body.formdata, function (data) {
               if (!(data.disabled)) {
                 if (data.type === 'file') {
-                  snippet += indent + `${form('-F', format)}`;
                   snippet += ` ${quoteType}${sanitize(data.key, trim, quoteType)}=` +
                     `${sanitize(`@"${sanitize(data.src, trim, '"', true)}"`, trim, quoteType, quoteType === '"')}`;
                   snippet += quoteType;
                 }
                 else {
-                  snippet += indent + `${form('-F', format)}`;
                   snippet += ` ${quoteType}${sanitize(data.key, trim, quoteType)}=` +
                     sanitize(`"${sanitize(data.value, trim, '"', true)}"`, trim, quoteType, quoteType === '"');
                   if (data.contentType) {
@@ -212,13 +167,24 @@ self = module.exports = {
             });
             break;
           case 'file':
-            snippet += indent + (format ? '--data-binary' : '-d');
-            snippet += ` ${quoteType}@${sanitize(body[body.mode].src, trim)}${quoteType}`;
+            snippet += indent + form('-d', format) + ` ${quoteType}@${sanitize(body[body.mode].src, trim)}${quoteType}`;
             break;
           default:
             snippet += `${form('-d', format)} ${quoteType}${quoteType}`;
         }
       }
+    }
+
+    if (!redirect) {
+      snippet += `${indent}--redirects-ignore`;
+    }
+
+    if (followOriginalHttpMethod) {
+      snippet += `${indent}--redirect-follow-method`;
+    }
+
+    if (maxRedirects > 0) {
+      snippet += `${indent}--max-redirects ${maxRedirects}`;
     }
 
     callback(null, snippet);
@@ -279,6 +245,14 @@ self = module.exports = {
         default: false,
         description: 'Redirect with the original HTTP method instead of the default behavior of redirecting with GET'
       },
+
+      {
+        name: 'Maximum number of redirects',
+        id: 'maxRedirects',
+        type: 'positiveInteger',
+        default: 0,
+        description: 'Set the maximum number of redirects to follow, defaults to 0 (unlimited)'
+      },
       {
         name: 'Trim request body fields',
         id: 'trimRequestBody',
@@ -287,11 +261,11 @@ self = module.exports = {
         description: 'Remove white space and additional lines that may affect the server\'s response'
       },
       {
-        name: 'Use Silent Mode',
-        id: 'silent',
+        name: 'Use Quiet Mode',
+        id: 'quiet',
         type: 'boolean',
         default: false,
-        description: 'Display the requested data without showing the cURL progress meter or error messages'
+        description: 'Display the requested data without showing any extra output.'
       }
     ];
   }

@@ -1,12 +1,12 @@
-# codegen-curl
+# codegen-postman-cli
 
-> Converts Postman-SDK Request into code snippet for cURL.
+> Converts Postman-SDK Request into code snippet for Postman CLI.
 
 #### Prerequisites
-To run Code-Gen, ensure that you have NodeJS >= v8. A copy of the NodeJS installable can be downloaded from 
+To run Code-Gen, ensure that you have NodeJS >= v8. A copy of the NodeJS installable can be downloaded from https://nodejs.org/en/download/package-manager.
 
 ## Using the Module
-The module will expose an object which will have property `convert` which is the function for converting the Postman-SDK request to cURL code snippet and `getOptions` function which returns an array of supported options.
+The module will expose an object which will have property `convert` which is the function for converting the Postman-SDK request to Postman CLI code snippet and `getOptions` function which returns an array of supported options.
 
 ### convert function
 Convert function takes three parameters
@@ -14,14 +14,18 @@ Convert function takes three parameters
 * `request` - Postman-SDK Request Object
 
 * `options` - options is an object which has following properties
+    * `multiLine` - Boolean denoting whether to split command across multiple lines
+    * `longFormat` - Boolean denoting whether to use long form options (--header instead of -H)
+    * `lineContinuationCharacter` - Character used to mark continuation of statement on next line (\\, ^, or `)
+    * `quoteType` - String denoting the quote type to use (single or double) for URL
+    * `requestTimeoutInSeconds` - Integer denoting time after which the request will timeout in seconds
+    * `followRedirect` - Boolean denoting whether to automatically follow HTTP redirects
+    * `followOriginalHttpMethod` - Boolean denoting whether to redirect with original HTTP method
+    * `maxRedirects` - Integer denoting maximum number of redirects to follow
+    * `trimRequestBody` - Boolean denoting whether to trim request body fields
+    * `quiet` - Boolean denoting whether to display requested data without extra output
     * `indentType` - String denoting type of indentation for code snippet. eg: 'Space', 'Tab'
     * `indentCount` - The number of indentation characters to add per code level
-    * `trimRequestBody` - Trim request body fields
-    * `followRedirect` - Boolean denoting whether to redirect a request
-    * `requestTimeoutInSeconds` - Integer denoting time after which the request will bail out in seconds
-    * `multiLine` - Boolean denoting whether to output code snippet with multi line breaks
-    * `longFormat` - Boolean denoting whether to use longform cURL options in snippet
-    * `quoteType` - String denoting the quote type to use (single or double) for URL
 
 * `callback` - callback function with first parameter as error and second parameter as string for code snippet
 
@@ -31,12 +35,16 @@ var request = new sdk.Request('www.google.com'),  //using postman sdk to create 
     options = {
         indentCount: 3,
         indentType: 'Space',
-        requestTimeout: 200,
+        requestTimeoutInSeconds: 200,
         trimRequestBody: true,
         multiLine: true,
         followRedirect: true,
+        followOriginalHttpMethod: false,
+        maxRedirects: 0,
         longFormat: true,
-        quoteType: 'single'
+        lineContinuationCharacter: '\\',
+        quoteType: 'single',
+        quiet: false
     };
 convert(request, options, function(error, snippet) {
     if (error) {
@@ -56,18 +64,82 @@ var options = getOptions();
 console.log(options);
 // output
 // [
-//       {
-//         name: 'Set indentation count',
-//         id: 'indentCount',
-//         type: 'positiveInteger',
-//         default: 2,
-//         description: 'Set the number of indentation characters to add per code level'
-//       },
-//       ...
+//   {
+//     name: 'Generate multiline snippet',
+//     id: 'multiLine',
+//     type: 'boolean',
+//     default: true,
+//     description: 'Split Postman CLI command across multiple lines'
+//   },
+//   {
+//     name: 'Use long form options',
+//     id: 'longFormat',
+//     type: 'boolean',
+//     default: true,
+//     description: 'Use the long form for Postman CLI options (--header instead of -H)'
+//   },
+//   {
+//     name: 'Line continuation character',
+//     id: 'lineContinuationCharacter',
+//     availableOptions: ['\\', '^', '`'],
+//     type: 'enum',
+//     default: '\\',
+//     description: 'Set a character used to mark the continuation of a statement on the next line'
+//   },
+//   {
+//     name: 'Quote Type',
+//     id: 'quoteType',
+//     availableOptions: ['single', 'double'],
+//     type: 'enum',
+//     default: 'single',
+//     description: 'String denoting the quote type to use (single or double) for URL'
+//   },
+//   {
+//     name: 'Set request timeout (in seconds)',
+//     id: 'requestTimeoutInSeconds',
+//     type: 'positiveInteger',
+//     default: 0,
+//     description: 'Set number of seconds the request should wait for a response before timing out (use 0 for infinity)'
+//   },
+//   {
+//     name: 'Follow redirects',
+//     id: 'followRedirect',
+//     type: 'boolean',
+//     default: true,
+//     description: 'Automatically follow HTTP redirects'
+//   },
+//   {
+//     name: 'Follow original HTTP method',
+//     id: 'followOriginalHttpMethod',
+//     type: 'boolean',
+//     default: false,
+//     description: 'Redirect with the original HTTP method instead of the default behavior of redirecting with GET'
+//   },
+//   {
+//     name: 'Maximum number of redirects',
+//     id: 'maxRedirects',
+//     type: 'positiveInteger',
+//     default: 0,
+//     description: 'Set the maximum number of redirects to follow, defaults to 0 (unlimited)'
+//   },
+//   {
+//     name: 'Trim request body fields',
+//     id: 'trimRequestBody',
+//     type: 'boolean',
+//     default: false,
+//     description: 'Remove white space and additional lines that may affect the server\'s response'
+//   },
+//   {
+//     name: 'Use Quiet Mode',
+//     id: 'quiet',
+//     type: 'boolean',
+//     default: false,
+//     description: 'Display the requested data without showing any extra output.'
+//   }
 // ]
 ```
 ### Guidelines for using generated snippet
 
 * Since Postman-SDK Request object doesn't provide complete path of the file, it needs to be manually inserted in case of uploading a file.
 
-* This module doesn't support cookies.
+* The generated snippet uses the `postman request` command from the Postman CLI. Make sure you have the Postman CLI installed to run the generated commands.
