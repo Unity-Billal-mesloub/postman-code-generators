@@ -39,6 +39,7 @@ function initializeOptions (options, request) {
     format: options.longFormat,
     trim: options.trimRequestBody,
     quiet: options.quiet,
+    debug: options.debug,
     followOriginalHttpMethod: options.followOriginalHttpMethod,
     quoteType,
     url,
@@ -67,7 +68,7 @@ function buildBaseCommand (request, opts, options) {
 }
 
 /**
- * Add quiet and timeout flags to snippet
+ * Add quiet, debug and timeout flags to snippet
  *
  * @param {string} snippet - Current snippet
  * @param {Object} opts - Extracted options
@@ -76,6 +77,9 @@ function buildBaseCommand (request, opts, options) {
 function addQuietAndTimeout (snippet, opts) {
   if (opts.quiet) {
     snippet += `${opts.indent}${form('-q', opts.format)}`;
+  }
+  if (opts.debug) {
+    snippet += `${opts.indent}--debug`;
   }
   if (opts.timeout > 0) {
     snippet += `${opts.indent}--timeout ${opts.timeout}`;
@@ -437,6 +441,13 @@ self = module.exports = {
         type: 'boolean',
         default: false,
         description: 'Display the requested data without showing any extra output.'
+      },
+      {
+        name: 'Use Debug Mode',
+        id: 'debug',
+        type: 'boolean',
+        default: false,
+        description: 'Show detailed execution information including retry attempts, redirects, and timing breakdowns.'
       }
     ];
   }

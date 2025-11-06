@@ -831,7 +831,7 @@ describe('postman-cli convert function', function () {
           }
           expect(snippet).to.be.a('string');
           expect(snippet).to.match(/^postman request POST /);
-          expect(snippet).to.include('--redirect-follow-method');
+          expect(snippet).to.include('--redirects-follow-method');
         });
       });
 
@@ -865,7 +865,7 @@ describe('postman-cli convert function', function () {
           }
           expect(snippet).to.be.a('string');
           expect(snippet).to.include('--redirects-ignore');
-          expect(snippet).to.not.include('--redirect-follow-method');
+          expect(snippet).to.not.include('--redirects-follow-method');
         });
       });
 
@@ -917,7 +917,7 @@ describe('postman-cli convert function', function () {
             expect.fail(null, null, error);
           }
           expect(snippet).to.be.a('string');
-          expect(snippet).to.include('--max-redirects 5');
+          expect(snippet).to.include('--redirects-max 5');
         });
       });
     });
@@ -1055,6 +1055,355 @@ describe('postman-cli convert function', function () {
         }
         expect(snippet).to.be.a('string');
         expect(snippet).to.include('--body \'@file-path/collection123.json\'');
+      });
+    });
+
+    describe('indentType option', function () {
+      it('should use spaces for indentation when indentType is "Space"', function () {
+        request = new Request({
+          'method': 'POST',
+          'header': [
+            {
+              'key': 'Content-Type',
+              'value': 'application/json'
+            }
+          ],
+          'body': {
+            'mode': 'raw',
+            'raw': '{"test": "data"}'
+          },
+          'url': {
+            'raw': 'https://postman-echo.com/post',
+            'protocol': 'https',
+            'host': [
+              'postman-echo',
+              'com'
+            ],
+            'path': [
+              'post'
+            ]
+          }
+        });
+        options = {
+          multiLine: true,
+          indentType: 'Space',
+          indentCount: 2,
+          lineContinuationCharacter: '\\'
+        };
+        convert(request, options, function (error, snippet) {
+          if (error) {
+            expect.fail(null, null, error);
+          }
+          expect(snippet).to.be.a('string');
+          // Check that lines are indented with spaces (the pattern should be: space + backslash + newline + spaces)
+          snippetArray = snippet.split('\n');
+          // Second line onwards should have space indentation
+          for (var i = 1; i < snippetArray.length; i++) {
+            line = snippetArray[i];
+            if (line.length > 0) {
+              // Line should start with spaces (indentCount = 2)
+              expect(line).to.match(/^ {2}/);
+            }
+          }
+        });
+      });
+
+      it('should use tabs for indentation when indentType is "Tab"', function () {
+        request = new Request({
+          'method': 'POST',
+          'header': [
+            {
+              'key': 'Content-Type',
+              'value': 'application/json'
+            }
+          ],
+          'body': {
+            'mode': 'raw',
+            'raw': '{"test": "data"}'
+          },
+          'url': {
+            'raw': 'https://postman-echo.com/post',
+            'protocol': 'https',
+            'host': [
+              'postman-echo',
+              'com'
+            ],
+            'path': [
+              'post'
+            ]
+          }
+        });
+        options = {
+          multiLine: true,
+          indentType: 'Tab',
+          indentCount: 1,
+          lineContinuationCharacter: '\\'
+        };
+        convert(request, options, function (error, snippet) {
+          if (error) {
+            expect.fail(null, null, error);
+          }
+          expect(snippet).to.be.a('string');
+          // Check that lines are indented with tabs
+          snippetArray = snippet.split('\n');
+          // Second line onwards should have tab indentation
+          for (var i = 1; i < snippetArray.length; i++) {
+            line = snippetArray[i];
+            if (line.length > 0) {
+              // Line should start with tab character
+              expect(line).to.match(/^\t/);
+            }
+          }
+        });
+      });
+
+      it('should respect indentCount when using Space indentation', function () {
+        request = new Request({
+          'method': 'POST',
+          'header': [
+            {
+              'key': 'X-Custom-Header',
+              'value': 'test'
+            }
+          ],
+          'url': {
+            'raw': 'https://postman-echo.com/post',
+            'protocol': 'https',
+            'host': [
+              'postman-echo',
+              'com'
+            ],
+            'path': [
+              'post'
+            ]
+          }
+        });
+        options = {
+          multiLine: true,
+          indentType: 'Space',
+          indentCount: 4,
+          lineContinuationCharacter: '\\'
+        };
+        convert(request, options, function (error, snippet) {
+          if (error) {
+            expect.fail(null, null, error);
+          }
+          expect(snippet).to.be.a('string');
+          snippetArray = snippet.split('\n');
+          // Second line onwards should have 4 spaces indentation
+          for (var i = 1; i < snippetArray.length; i++) {
+            line = snippetArray[i];
+            if (line.length > 0) {
+              expect(line).to.match(/^ {4}/);
+            }
+          }
+        });
+      });
+
+      it('should use Space indentation by default', function () {
+        request = new Request({
+          'method': 'POST',
+          'header': [
+            {
+              'key': 'Content-Type',
+              'value': 'application/json'
+            }
+          ],
+          'url': {
+            'raw': 'https://postman-echo.com/post',
+            'protocol': 'https',
+            'host': [
+              'postman-echo',
+              'com'
+            ],
+            'path': [
+              'post'
+            ]
+          }
+        });
+        options = {
+          multiLine: true,
+          lineContinuationCharacter: '\\'
+        };
+        convert(request, options, function (error, snippet) {
+          if (error) {
+            expect.fail(null, null, error);
+          }
+          expect(snippet).to.be.a('string');
+          snippetArray = snippet.split('\n');
+          // Should use spaces by default (2 spaces based on default indentCount)
+          for (var i = 1; i < snippetArray.length; i++) {
+            line = snippetArray[i];
+            if (line.length > 0) {
+              expect(line).to.match(/^ {2}/);
+              expect(line).to.not.match(/^\t/);
+            }
+          }
+        });
+      });
+    });
+
+    describe('debug option', function () {
+      it('should add --debug flag when debug option is true', function () {
+        request = new Request({
+          'method': 'GET',
+          'header': [],
+          'url': {
+            'raw': 'https://postman-echo.com/get',
+            'protocol': 'https',
+            'host': [
+              'postman-echo',
+              'com'
+            ],
+            'path': [
+              'get'
+            ]
+          }
+        });
+        options = {
+          debug: true
+        };
+        convert(request, options, function (error, snippet) {
+          if (error) {
+            expect.fail(null, null, error);
+          }
+          expect(snippet).to.be.a('string');
+          expect(snippet).to.include('--debug');
+        });
+      });
+
+      it('should not add --debug flag when debug option is false', function () {
+        request = new Request({
+          'method': 'GET',
+          'header': [],
+          'url': {
+            'raw': 'https://postman-echo.com/get',
+            'protocol': 'https',
+            'host': [
+              'postman-echo',
+              'com'
+            ],
+            'path': [
+              'get'
+            ]
+          }
+        });
+        options = {
+          debug: false
+        };
+        convert(request, options, function (error, snippet) {
+          if (error) {
+            expect.fail(null, null, error);
+          }
+          expect(snippet).to.be.a('string');
+          expect(snippet).to.not.include('--debug');
+        });
+      });
+
+      it('should not add --debug flag by default', function () {
+        request = new Request({
+          'method': 'GET',
+          'header': [],
+          'url': {
+            'raw': 'https://postman-echo.com/get',
+            'protocol': 'https',
+            'host': [
+              'postman-echo',
+              'com'
+            ],
+            'path': [
+              'get'
+            ]
+          }
+        });
+        options = {};
+        convert(request, options, function (error, snippet) {
+          if (error) {
+            expect.fail(null, null, error);
+          }
+          expect(snippet).to.be.a('string');
+          expect(snippet).to.not.include('--debug');
+        });
+      });
+
+      it('should add --debug flag with multiline format', function () {
+        request = new Request({
+          'method': 'POST',
+          'header': [
+            {
+              'key': 'Content-Type',
+              'value': 'application/json'
+            }
+          ],
+          'body': {
+            'mode': 'raw',
+            'raw': '{"test": "data"}'
+          },
+          'url': {
+            'raw': 'https://postman-echo.com/post',
+            'protocol': 'https',
+            'host': [
+              'postman-echo',
+              'com'
+            ],
+            'path': [
+              'post'
+            ]
+          }
+        });
+        options = {
+          debug: true,
+          multiLine: true,
+          longFormat: true
+        };
+        convert(request, options, function (error, snippet) {
+          if (error) {
+            expect.fail(null, null, error);
+          }
+          expect(snippet).to.be.a('string');
+          expect(snippet).to.include('--debug');
+          // Verify it appears on its own line in multiline format
+          snippetArray = snippet.split('\n');
+          var foundDebug = false;
+          for (var i = 0; i < snippetArray.length; i++) {
+            if (snippetArray[i].includes('--debug')) {
+              foundDebug = true;
+              break;
+            }
+          }
+          expect(foundDebug).to.be.true;
+        });
+      });
+
+      it('should work with both quiet and debug flags together', function () {
+        request = new Request({
+          'method': 'GET',
+          'header': [],
+          'url': {
+            'raw': 'https://postman-echo.com/get',
+            'protocol': 'https',
+            'host': [
+              'postman-echo',
+              'com'
+            ],
+            'path': [
+              'get'
+            ]
+          }
+        });
+        options = {
+          quiet: true,
+          debug: true,
+          longFormat: true
+        };
+        convert(request, options, function (error, snippet) {
+          if (error) {
+            expect.fail(null, null, error);
+          }
+          expect(snippet).to.be.a('string');
+          expect(snippet).to.include('--quiet');
+          expect(snippet).to.include('--debug');
+        });
       });
     });
   });
