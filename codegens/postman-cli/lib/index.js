@@ -157,7 +157,7 @@ self = module.exports = {
             });
             break;
           case 'file':
-            snippet += indent + form('-d', format) + ` ${quoteType}@${sanitize(body[body.mode].src, trim)}${quoteType}`;
+            snippet += indent + form('-d', format) + ` ${quoteType}@${sanitize(body[body.mode].src, trim, quoteType)}${quoteType}`;
             break;
           default:
             snippet += `${indent}${form('-d', format)} ${quoteType}${quoteType}`;
@@ -175,11 +175,11 @@ self = module.exports = {
     }
 
     if (followOriginalHttpMethod) {
-      snippet += `${indent}--redirect-follow-method`;
+      snippet += `${indent}--redirects-follow-method`;
     }
 
     if (maxRedirects > 0) {
-      snippet += `${indent}--max-redirects ${maxRedirects}`;
+      snippet += `${indent}--redirects-max ${maxRedirects}`;
     }
 
     callback(null, snippet);

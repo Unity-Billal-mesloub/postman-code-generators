@@ -10,7 +10,6 @@
   },
   "main": "index.js",
   "scripts": {
-    "dev": "node dev-watch.js",
     "test": "node npm/test.js",
     "test-lint": "node npm/test-lint.js",
     "test-unit": "node npm/test-unit.js"
