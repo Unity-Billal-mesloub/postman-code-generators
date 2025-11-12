@@ -4,6 +4,9 @@
 
 ## [v2.1.0] - 2025-11-12
 
+### Feature
+-   Support Postman CLI's request command.
+
 ## [v2.0.0] - 2025-03-10
 
 ### Breaking Changes
