@@ -7,6 +7,9 @@
 ### Feature
 -   Support Postman CLI's request command.
 
+### Chore
+-   Upgraded build pipeline to use Ubuntu 22 (in response to GitHub Action's deprecation.)
+
 ## [v2.0.0] - 2025-03-10
 
 ### Breaking Changes
