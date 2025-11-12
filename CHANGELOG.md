@@ -2,11 +2,13 @@
 
 ## [Unreleased]
 
+## [v2.1.0] - 2025-11-12
+
 ## [v2.0.0] - 2025-03-10
 
 ### Breaking Changes
 
--   Dropped support for node < v18.
+-   Dropped support for node &lt; v18.
 
 ## [v1.14.2] - 2025-02-21
 
@@ -202,7 +204,9 @@ v1.0.0 (May 29, 2020)
 -   Add ES6 syntax support for NodeJS Request, NodeJS Native and NodeJS Unirest
 -   Fix snippet generation for powershell and jquery, where form data params had no type field
 
-[Unreleased]: https://github.com/postmanlabs/postman-code-generators/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/postmanlabs/postman-code-generators/compare/v2.1.0...HEAD
+
+[v2.1.0]: https://github.com/postmanlabs/postman-code-generators/compare/v2.0.0...v2.1.0
 
 [v2.0.0]: https://github.com/postmanlabs/postman-code-generators/compare/v1.14.2...v2.0.0
 
