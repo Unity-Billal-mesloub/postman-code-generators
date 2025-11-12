@@ -5,7 +5,7 @@ sudo apt-get update
 echo "Installing dependencies required for tests in codegens/csharp-httpclient"
 # Install latest .net6.0 sdk
 pushd ./codegens/csharp-httpclient &>/dev/null;
-  wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+  wget -q https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
   sudo dpkg -i packages-microsoft-prod.deb
   sudo apt-get install apt-transport-https
   sudo apt-get update
