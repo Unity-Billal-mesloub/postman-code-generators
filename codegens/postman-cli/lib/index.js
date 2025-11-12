@@ -360,7 +360,7 @@ self = module.exports = {
         description: 'Select the character used to indent lines of code'
       },
       {
-        name: 'Indentation count',
+        name: 'Set indentation count',
         id: 'indentCount',
         type: 'positiveInteger',
         default: 2,
@@ -371,14 +371,14 @@ self = module.exports = {
         id: 'multiLine',
         type: 'boolean',
         default: true,
-        description: 'Split Postman CLI command across multiple lines'
+        description: 'Split cURL command across multiple lines'
       },
       {
         name: 'Use long form options',
         id: 'longFormat',
         type: 'boolean',
         default: true,
-        description: 'Use the long form for Postman CLI options (--header instead of -H)'
+        description: 'Use the long form for cURL options (--header instead of -H)'
       },
       {
         name: 'Line continuation character',
@@ -396,7 +396,7 @@ self = module.exports = {
         type: 'enum',
         default: 'single',
         description: 'String denoting the quote type to use (single or double) for URL ' +
-          '(Use double quotes when running Postman CLI in cmd.exe and single quotes for the rest)'
+          '(Use double quotes when running curl in cmd.exe and single quotes for the rest)'
       },
       {
         name: 'Set request timeout (in seconds)',
